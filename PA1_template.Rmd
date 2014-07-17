@@ -3,17 +3,25 @@
 
 ## Loading and preprocessing the data
 #### Constants
+```{r}
 DATA_FILE = "..\\..\\Data\\activity.csv"
+```
 
 #### Load
+```{r load}
 dta = read.csv(DATA_FILE)
-
+```
 #### Process (No changes...yet)
 
 
 ## What is mean total number of steps taken per day?
-
-
+```{r steps_evaluation}
+with(dta,hist(steps))
+mean_steps = mean(dta$steps, na.rm = TRUE)
+median_steps = median(dta$steps,na.rm = TRUE)
+```
+The number of Steps is highly skewed towards 0, 
+with a **median of `r median_steps`** and **mean of `r mean_steps`**
 
 ## What is the average daily activity pattern?
 
