@@ -2,7 +2,13 @@
 
 
 ## Loading and preprocessing the data
+#### Constants
+DATA_FILE = "..\\..\\Data\\activity.csv"
 
+#### Load
+dta = read.csv(DATA_FILE)
+
+#### Process (No changes...yet)
 
 
 ## What is mean total number of steps taken per day?
