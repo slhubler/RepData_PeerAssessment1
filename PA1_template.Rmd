@@ -1,18 +1,50 @@
 # Reproducible Research: Peer Assessment 1
 
+## Tools
+Here I include constants and routines that are used in the rest of the document.
 
-## Loading and preprocessing the data
 #### Constants
 ```{r}
 DATA_FILE = "..\\..\\Data\\activity.csv"
 ```
 
+#### Support functions
+```{r}
+# Converts a date (in text) and time of numeric format to POSIXct format
+#   Input: dt_text is the date (text format, yyyy-mm-dd)
+#   Input: tm_number is the time (integer of form hM, e.g. 105 is 1:05)
+#   Output: Time/Date stamp, combining the two pieces of information
+convert_date_time = function(dt_text,tm_number) {
+    tm_text = sprintf("%04d",tm_number)
+    date_time_text = paste(dt_text, tm_text)
+    result = as.POSIXct(date_time_text,format = "%Y-%m-%d %H%M", tz="GMT")
+    return(result) #I prefer explicit, simple returns - not efficient but...
+}
+
+#Test; should return 2012-12-14 01:20:00 GMT
+convert_date_time("2012-12-14",120)
+```
+
+## Loading and preprocessing the data
+
 #### Load
 ```{r load}
 dta = read.csv(DATA_FILE)
 ```
-#### Process (No changes...yet)
-
+#### Process (Add *date_time* and *time* columns to *dta*)
+```{r add times}
+dta$date_time = mapply(convert_date_time,
+                       dta$date,
+                       dta$interval,
+                       SIMPLIFY=FALSE
+                       )
+dta$time = unlist(mapply(function(a){unlist(format(a,"%H:%M"))}, 
+                         dta$date_time, 
+                         SIMPLIFY=FALSE
+                         )
+                  )
+dta$time = as.POSIXct(dta$time, format="%H:%M")
+```
 
 ## What is mean total number of steps taken per day?
 ```{r steps_evaluation}
@@ -24,11 +56,47 @@ The number of Steps is highly skewed towards 0,
 with a **median of `r median_steps`** and **mean of `r mean_steps`**
 
 ## What is the average daily activity pattern?
+```{r daily activity pattern}
+means_per_interval = aggregate(steps ~ time, dta, mean)
+with(means_per_interval, 
+     plot(x = time,
+          y = steps,
+          type = "l",
+          ylab = "Mean steps",
+          main = "Daily patterns of activity"
+          )
+     )
 
+max_mean = max(means_per_interval$steps) # Variable reported below
+max_ind = which(means_per_interval$steps == max_mean)
+max_interval = means_per_interval$time[max_ind]
+max_interval = format(max_interval,"%H:%M") # Variable reported below
+```
 
+The maximum mean number of steps found in any interval (`r max_mean`)
+is found in the interval starting at **`r max_interval`**.
 
 ## Imputing missing values
 
+#### Report number of missing values
+```{r Missing values}
+count_of_missing_values = sum(is.na(dta$steps)) # Variable reported below
 
+```
+
+The total number of missing values is **`r count_of_missing_values`**.
+
+#### Strategy for filling in missing values
+
+#### Use strategy and create new dataset
+```{r PerformImputation}
+
+
+```
+
+#### How does imputaiton affect the results?
+```{r Imputation results}
+
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
