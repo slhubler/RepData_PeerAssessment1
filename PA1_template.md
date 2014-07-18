@@ -77,8 +77,8 @@ with(total_steps,hist(steps, breaks=10))
 ![plot of chunk total steps per day](figure/total steps per day.png) 
 
 ```r
-mean_steps = mean(total_steps$steps, na.rm = TRUE)    #Variable used below
 median_steps = median(total_steps$steps,na.rm = TRUE) #Variable used below
+mean_steps = mean(total_steps$steps, na.rm = TRUE)    #Variable used below
 ```
 
 The total number of steps per day has a **median of 10765** and **mean of 1.0766 &times; 10<sup>4</sup>**
@@ -223,8 +223,8 @@ max_steps = max(m$steps)
 
 # Plot
 par(mfrow = c(2,1))
-plot_steps_vs_time(m,"weekday",max_steps)
-plot_steps_vs_time(m,"weekend",max_steps)
+plot_steps_vs_time(m,"weekday",max_steps) # See definition of function, ...
+plot_steps_vs_time(m,"weekend",max_steps) # ... in Support Functions section
 ```
 
 ![plot of chunk weekdays vs weekends](figure/weekdays vs weekends.png) 

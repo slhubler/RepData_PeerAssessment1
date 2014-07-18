@@ -63,8 +63,8 @@ dta$time = as.POSIXct(dta$time, format="%H:%M")
 ```{r total steps per day}
 total_steps = aggregate(steps ~ date, dta, sum)
 with(total_steps,hist(steps, breaks=10))
-mean_steps = mean(total_steps$steps, na.rm = TRUE)    #Variable used below
 median_steps = median(total_steps$steps,na.rm = TRUE) #Variable used below
+mean_steps = mean(total_steps$steps, na.rm = TRUE)    #Variable used below
 ```
 
 The total number of steps per day has a **median of `r median_steps`** and **mean of `r mean_steps`**
@@ -186,6 +186,6 @@ max_steps = max(m$steps)
 
 # Plot
 par(mfrow = c(2,1))
-plot_steps_vs_time(m,"weekday",max_steps)
-plot_steps_vs_time(m,"weekend",max_steps)
+plot_steps_vs_time(m,"weekday",max_steps) # See definition of function, ...
+plot_steps_vs_time(m,"weekend",max_steps) # ... in Support Functions section
 ```
