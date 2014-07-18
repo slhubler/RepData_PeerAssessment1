@@ -87,16 +87,49 @@ count_of_missing_values = sum(is.na(dta$steps)) # Variable reported below
 The total number of missing values is **`r count_of_missing_values`**.
 
 #### Strategy for filling in missing values
+The goal for filling missing values is to minimize the effect of new values on the overall structure.  The simplest method that has some chance of doing this is one that uses the mean activity at a particular time of day to replace values that are missing at that time of day (i.e. we assume that variation caused by time of day is greater than variation driven by the date).
 
 #### Use strategy and create new dataset
-```{r PerformImputation}
+```{r Perform imputation}
 
-
+na_idx = is.na(dta$steps)
+na_time_list = dta$time[na_idx]
+matches = match(na_time_list,means_per_interval$time)
+dta_imputed = dta
+dta_imputed$steps[na_idx] = means_per_interval$steps[matches]
 ```
 
-#### How does imputaiton affect the results?
+The new dataset, *dta_imputed*, has been created.
+
+#### How does imputation affect the results?
 ```{r Imputation results}
+# Count steps per day
+steps_per_day     = aggregate(steps ~ date, dta,         sum)
+steps_per_day_imp = aggregate(steps ~ date, dta_imputed, sum)
 
+# Histograms
+with(steps_per_day,hist(steps,breaks=20,main="Histogram of steps (original)"))
+with(steps_per_day_imp,hist(steps,breaks=20,main="Histogram of steps (imputed)"))
+
+#Table comparing results
+means   = c(Original = mean(      steps_per_day$steps), 
+            Imputed  = mean(  steps_per_day_imp$steps))
+medians = c(Original = median(    steps_per_day$steps), 
+            Imputed  = median(steps_per_day_imp$steps))
+means = as.data.frame(means)
+medians = as.data.frame(medians)
+tbl = cbind(means,medians)
+tbl
 ```
+
+This form of imputation has minimal effect on the "center" because missing values are in entire days -- effectively in imputation increases the number of "average" days. Side effects for the choice of imputation method on the total number of steps in a day include:
+
+- The mean remains unchanged.
+- Days filled with NA are replaced with "average" days (increasing the number of such days)
+- The median is driven closer to the mean.
+- The variance (not displayed) is reduced.
+- The shape of the histogram is changed except for the rectangle containing the mean, which increases in size.
+
+The size of these effects are dependent on the number of missing values. This analysis also assumes that entire days are missing, not partial days.
 
 ## Are there differences in activity patterns between weekdays and weekends?
