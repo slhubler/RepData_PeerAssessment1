@@ -6,6 +6,7 @@ Here I include constants and routines that are used in the rest of the document.
 #### Constants
 ```{r}
 DATA_FILE = "..\\..\\Data\\activity.csv"
+LIST_OF_WEEKDAYS = c("Monday","Tuesday","Wednesday","Thursday","Friday")
 ```
 
 #### Support functions
@@ -19,6 +20,19 @@ convert_date_time = function(dt_text,tm_number) {
     date_time_text = paste(dt_text, tm_text)
     result = as.POSIXct(date_time_text,format = "%Y-%m-%d %H%M", tz="GMT")
     return(result) #I prefer explicit, simple returns - not efficient but...
+}
+
+# Specialized plot to compare weekends and weekdays
+plot_steps_vs_time = function(dta,day_type,max_steps){
+    m = dta[dta$weekday_factor == day_type,]
+    with(m, plot(time,
+                 steps,
+                 type="l",
+                 xlab = "interval",
+                 ylim=c(0,max_steps),
+                 main=day_type
+                 )
+         )
 }
 
 #Test; should return 2012-12-14 01:20:00 GMT
@@ -133,3 +147,45 @@ This form of imputation has minimal effect on the "center" because missing value
 The size of these effects are dependent on the number of missing values. This analysis also assumes that entire days are missing, not partial days.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+#### Create new factor (*weekday_or_end*)
+
+```{r creating weekday_or_end factor column}
+# I'm annoyed with the [[1]] hack but I haven't found a way around it yet.
+# It has to do with the use of mapply above.
+weekday_list = unlist(lapply(X = dta_imputed$date_time,
+                             FUN = function(a){weekdays(a[[1]])}
+                             )
+                      )
+weekday_label = unlist(lapply(X = weekday_list,
+                             FUN = function(a)
+                                 {
+                                 if(a %in% LIST_OF_WEEKDAYS){"weekday"}
+                                 else {"weekend"}
+                                 }
+                             )
+                      )
+weekday_factor = as.factor(weekday_label)
+
+# I decided on new variables to simplify testing
+dta_w_weekday         = cbind(dta,        weekday_factor)
+dta_w_weekday_imputed = cbind(dta_imputed,weekday_factor)
+```
+
+#### Panal plot - compare weekdays and weekends
+
+```{r weekdays vs weekends}
+# Aggregate on new factor
+# (Using m as a temporary variable to simplify the appearance)
+m = aggregate(steps ~ time + weekday_factor,
+              dta_w_weekday_imputed,
+              mean
+              )
+# Find max steps to put two plots on same scale
+max_steps = max(m$steps)
+
+# Plot
+par(mfrow = c(2,1))
+plot_steps_vs_time(m,"weekday",max_steps)
+plot_steps_vs_time(m,"weekend",max_steps)
+```
