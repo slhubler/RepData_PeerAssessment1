@@ -59,15 +59,15 @@ dta$time = unlist(mapply(function(a){unlist(format(a,"%H:%M"))},
                   )
 dta$time = as.POSIXct(dta$time, format="%H:%M")
 ```
-
 ## What is mean total number of steps taken per day?
-```{r steps_evaluation}
-with(dta,hist(steps))
-mean_steps = mean(dta$steps, na.rm = TRUE)
-median_steps = median(dta$steps,na.rm = TRUE)
+```{r total steps per day}
+total_steps = aggregate(steps ~ date, dta, sum)
+with(total_steps,hist(steps, breaks=10))
+mean_steps = mean(total_steps$steps, na.rm = TRUE)    #Variable used below
+median_steps = median(total_steps$steps,na.rm = TRUE) #Variable used below
 ```
-The number of Steps is highly skewed towards 0, 
-with a **median of `r median_steps`** and **mean of `r mean_steps`**
+
+The total number of steps per day has a **median of `r median_steps`** and **mean of `r mean_steps`**
 
 ## What is the average daily activity pattern?
 ```{r daily activity pattern}
