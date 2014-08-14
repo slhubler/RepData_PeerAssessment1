@@ -38,9 +38,10 @@ plot_steps_vs_time <- function(data,day_type,max_steps){
     with(m, plot(time,
                  steps,
                  type="l",
-                 xlab = "interval",
-                 ylim=c(0,max_steps),
-                 main=day_type
+                 main=day_type,
+                 xlab = "time",
+                 ylab = "mean steps",
+                 ylim=c(0,max_steps)
                  )
          )
 }
@@ -62,9 +63,10 @@ unlink(temp)
 
 ### Preprocessing
 *date* and *interval* are combined into *datetime* (POSIXct format).
-The new *time* variable is derived from *datetime*
-Note that the column labeled "interval" is a time formatted as HHMM, which
-makes it awkward for plotting and requiring more complex handling.
+The new *time* variable is derived from *datetime*.
+Note that the column labeled *interval* is a time formatted as HHMM, which
+makes it awkward for plotting and requiring more complex handling to avoid
+spurious flat sections (e.g. between 155 and 200).
 
 ```{r Preprocessing}
 data$datetime = mapply(convert_to_datetime,data$date,data$interval,SIMPLIFY=FALSE)
@@ -78,7 +80,15 @@ data$time = as.POSIXct(data$time, format="%H:%M")
 
 ```{r Steps_per_day}
 steps.per.day = aggregate(steps~date, data, sum)
-hist(steps.per.day$steps,breaks = 10)
+hist(steps.per.day$steps,
+     breaks = 10,
+     xlab="Total steps",
+     ylab="Frequency (days)",
+     main="Histogram of steps per day"
+     )
+```
+
+```{r Steps_per_day_middle}
 steps.per.day.mean = mean(steps.per.day$steps)
 steps.per.day.median = median(steps.per.day$steps)
 display.mean = sprintf("%.1f", steps.per.day.mean)
@@ -128,7 +138,7 @@ Here we create a new column, *imputed.steps*, that replaces all NA's with the
 mean for that interval, as computed in the previous section. Note that I have
 decided, for the sake of efficiency and clarity, to ignore the "new dataset" 
 requirement in condition 3 of "Imputing missing values".  The "new dataset"
-effectively lives as a single column in the original data.
+effectively exists as a new (single) column in the original dataframe.
 
 ```{r Imputation}
 na.idx = which(is.na(data$steps))
@@ -142,7 +152,15 @@ data$imputed.steps[na.idx] = imputed$steps  #Replace na's
 ### The effects of imputation
 ```{r Steps_per_day_imputed}
 imputed.steps.per.day = aggregate(imputed.steps~date, data, sum)
-hist(imputed.steps.per.day$imputed.steps,breaks = 10)
+hist(imputed.steps.per.day$imputed.steps,
+     breaks = 10,
+     main = "Histogram of steps per day (includes imputed data)",
+     xlab = "Total steps",
+     ylab = "Frequency (days)"
+     )
+```
+
+```{r Steps_per_day_imputed_analysis}
 imputed.steps.per.day.mean = mean(imputed.steps.per.day$imputed.steps)
 imputed.steps.per.day.median = median(imputed.steps.per.day$imputed.steps)
 imputed.display.mean = sprintf("%.1f", imputed.steps.per.day.mean)
