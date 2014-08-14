@@ -5,7 +5,7 @@ date: "Tuesday, August 12, 2014"
 output: html_document
 ---
 
-# Preliminaries
+# 1 - Preliminaries
 ### Constant(s) used later:
 
 ```{r Libraries}
@@ -50,9 +50,11 @@ makes it awkward for plotting and requiring more complex handling.
 data$datetime = mapply(convert_to_datetime,data$date,data$interval,SIMPLIFY=FALSE)
 
 data$time = unlist(mapply(function(a){unlist(format(a,"%H:%M"))}, data$datetime, SIMPLIFY=FALSE))
+data$time = as.POSIXct(data$time, format="%H:%M")
+#I would love to know a simple way to avoid attaching a date to this value...
 ```
 
-# Steps per day
+# 2 - Steps per day
 
 ```{r Steps_per_day}
 steps.per.day = aggregate(steps~date, data, sum)
@@ -73,9 +75,28 @@ display.mean
 display.median
 ```
 
+# 3 - Daily pattern
 
-# Daily pattern
+```{r Daily_pattern}
+steps.per.interval = aggregate(steps~time, data, mean, na.rm=TRUE)
+with(steps.per.interval,
+     plot(steps~time, 
+          main="Mean number of steps per 5-minute interval",
+          type = "l")
+     )
+```
 
-# Imputing missing values
+The time with the greatest mean number of steps is
 
-# Weekdays vs. Weekends
+```{r Max_time_of_day}
+idx = with(steps.per.interval, 
+           which(steps == max(steps,na.rm = rm),)
+           )
+max.interval = steps.per.interval[idx,]
+
+format(max.interval$time,"%H:%M")
+```
+
+# 4 - Imputing missing values
+
+# 5 - Weekdays vs. Weekends
