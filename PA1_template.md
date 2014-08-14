@@ -39,9 +39,10 @@ plot_steps_vs_time <- function(data,day_type,max_steps){
     with(m, plot(time,
                  steps,
                  type="l",
-                 xlab = "interval",
-                 ylim=c(0,max_steps),
-                 main=day_type
+                 main=day_type,
+                 xlab = "time",
+                 ylab = "mean steps",
+                 ylim=c(0,max_steps)
                  )
          )
 }
@@ -62,9 +63,10 @@ unlink(temp)
 
 ### Preprocessing
 *date* and *interval* are combined into *datetime* (POSIXct format).
-The new *time* variable is derived from *datetime*
-Note that the column labeled "interval" is a time formatted as HHMM, which
-makes it awkward for plotting and requiring more complex handling.
+The new *time* variable is derived from *datetime*.
+Note that the column labeled *interval* is a time formatted as HHMM, which
+makes it awkward for plotting and requiring more complex handling to avoid
+spurious flat sections (e.g. between 155 and 200).
 
 
 ```r
@@ -80,10 +82,16 @@ data$time = as.POSIXct(data$time, format="%H:%M")
 
 ```r
 steps.per.day = aggregate(steps~date, data, sum)
-hist(steps.per.day$steps,breaks = 10)
+hist(steps.per.day$steps,
+     breaks = 10,
+     xlab="Total steps",
+     ylab="Frequency (days)",
+     main="Histogram of steps per day"
+     )
 ```
 
 ![plot of chunk Steps_per_day](figure/Steps_per_day.png) 
+
 
 ```r
 steps.per.day.mean = mean(steps.per.day$steps)
@@ -158,7 +166,7 @@ Here we create a new column, *imputed.steps*, that replaces all NA's with the
 mean for that interval, as computed in the previous section. Note that I have
 decided, for the sake of efficiency and clarity, to ignore the "new dataset" 
 requirement in condition 3 of "Imputing missing values".  The "new dataset"
-effectively lives as a single column in the original data.
+effectively exists as a new (single) column in the original dataframe.
 
 
 ```r
@@ -174,10 +182,16 @@ data$imputed.steps[na.idx] = imputed$steps  #Replace na's
 
 ```r
 imputed.steps.per.day = aggregate(imputed.steps~date, data, sum)
-hist(imputed.steps.per.day$imputed.steps,breaks = 10)
+hist(imputed.steps.per.day$imputed.steps,
+     breaks = 10,
+     main = "Histogram of steps per day (includes imputed data)",
+     xlab = "Total steps",
+     ylab = "Frequency (days)"
+     )
 ```
 
 ![plot of chunk Steps_per_day_imputed](figure/Steps_per_day_imputed.png) 
+
 
 ```r
 imputed.steps.per.day.mean = mean(imputed.steps.per.day$imputed.steps)
