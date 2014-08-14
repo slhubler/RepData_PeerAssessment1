@@ -6,28 +6,32 @@ output: html_document
 ---
 
 # Preliminaries
-## Constant(s) used later:
+### Constant(s) used later:
+
+```{r Libraries}
+```
 
 ```{r Constants}
-FILE_HTTP = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+# Note that this address has been altered: the "s" was removed from "https"
+FILE_HTTP = "http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 ```
 
-## Utility functions:
+### Utility functions:
 ```{r Utilities}
-convert_interval_to_time <- function(x) {
-    x.str = sprintf("%04i",x)
-    x.time = strptime(x=x.str,format="%H%M",tz="UTC")
-    return(x.time)
+convert_to_datetime <- function(date.str, interval) {
+    interval.str = sprintf("%04i", interval)
+    datetime.str = paste(date.str,interval.str)
+    datetime = as.POSIXct(datetime.str, format="%Y-%m-%d %H%M",tz="UTC")
+    return(datetime)
 }
+
 ```
 
-## Loading
+### Loading
 Data is downloaded using from the link provided in the project description.
 The data is loaded directly into memory - the file is not saved on disk.
 
 ```{r Loading, cache=TRUE,echo=TRUE}
-# Thanks to stackoverflow.com for this structure of unzipping files (#3053833).
-# It downloads the file straight to memory without saving the zip to disk.
 temp = tempfile()
 download.file(url = FILE_HTTP, destfile = temp)
 data = read.csv(unz(temp,"activity.csv"))
@@ -36,17 +40,39 @@ unlink(temp)
 
 ```
 
-## Preprocessing
-"date" and "interval" are converted to "day" and "time" (POSIX formats).
+### Preprocessing
+*date* and *interval* are combined into *datetime* (POSIXct format).
+The new *time* variable is derived from *datetime*
 Note that the column labeled "interval" is a time formatted as HHMM, which
 makes it awkward for plotting and requiring more complex handling.
 
 ```{r Preprocessing}
-data$day = strptime(x=data$date,format="%Y-%m-%d",tz="UTC")
-data$time = lapply(X = data$interval, FUN = convert_interval_to_time)
+data$datetime = mapply(convert_to_datetime,data$date,data$interval,SIMPLIFY=FALSE)
+
+data$time = unlist(mapply(function(a){unlist(format(a,"%H:%M"))}, data$datetime, SIMPLIFY=FALSE))
 ```
 
 # Steps per day
+
+```{r Steps_per_day}
+steps.per.day = aggregate(steps~date, data, sum)
+hist(steps.per.day$steps,breaks = 10)
+steps.per.day.mean = mean(steps.per.day$steps)
+steps.per.day.median = median(steps.per.day$steps)
+display.mean = sprintf("%.1f", steps.per.day.mean)
+display.median = sprintf("%d", steps.per.day.median)
+```
+
+The mean and median steps per day, respectively, are
+
+```{r}
+display.mean
+```
+
+```{r}
+display.median
+```
+
 
 # Daily pattern
 
