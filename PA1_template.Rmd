@@ -14,6 +14,8 @@ output: html_document
 ```{r Constants}
 # Note that this address has been altered: the "s" was removed from "https"
 FILE_HTTP = "http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+# Assumes environment is using English
+LIST_OF_WEEKDAYS = c("Monday","Tuesday","Wednesday","Thursday","Friday")
 ```
 
 ### Utility functions:
@@ -23,6 +25,24 @@ convert_to_datetime <- function(date.str, interval) {
     datetime.str = paste(date.str,interval.str)
     datetime = as.POSIXct(datetime.str, format="%Y-%m-%d %H%M",tz="UTC")
     return(datetime)
+}
+
+convert_to_weekday_weekend <- function(dt) {
+    day = weekdays(as.Date(dt[[1]]))
+    if(day %in% LIST_OF_WEEKDAYS) {"weekday"}
+    else {"weekend"}
+}
+
+plot_steps_vs_time <- function(data,day_type,max_steps){
+    m = data[data$daytype == day_type,]
+    with(m, plot(time,
+                 steps,
+                 type="l",
+                 xlab = "interval",
+                 ylim=c(0,max_steps),
+                 main=day_type
+                 )
+         )
 }
 
 ```
@@ -62,7 +82,7 @@ hist(steps.per.day$steps,breaks = 10)
 steps.per.day.mean = mean(steps.per.day$steps)
 steps.per.day.median = median(steps.per.day$steps)
 display.mean = sprintf("%.1f", steps.per.day.mean)
-display.median = sprintf("%d", steps.per.day.median)
+display.median = sprintf("%.1f", steps.per.day.median)
 ```
 
 The mean and median steps per day, respectively, are
@@ -99,4 +119,77 @@ format(max.interval$time,"%H:%M")
 
 # 4 - Imputing missing values
 
+The number of missing values:
+```{r Missing_values}
+sum(is.na(data$steps))
+```
+
+Here we create a new column, *imputed.steps*, that replaces all NA's with the
+mean for that interval, as computed in the previous section. Note that I have
+decided, for the sake of efficiency and clarity, to ignore the "new dataset" 
+requirement in condition 3 of "Imputing missing values".  The "new dataset"
+effectively lives as a single column in the original data.
+
+```{r Imputation}
+na.idx = which(is.na(data$steps))
+imputed = data[na.idx,]
+imputed$steps = steps.per.interval$steps[match(imputed$time, 
+                                               steps.per.interval$time)]
+data$imputed.steps         = data$steps     #Default to actual value
+data$imputed.steps[na.idx] = imputed$steps  #Replace na's
+```
+
+### The effects of imputation
+```{r Steps_per_day_imputed}
+imputed.steps.per.day = aggregate(imputed.steps~date, data, sum)
+hist(imputed.steps.per.day$imputed.steps,breaks = 10)
+imputed.steps.per.day.mean = mean(imputed.steps.per.day$imputed.steps)
+imputed.steps.per.day.median = median(imputed.steps.per.day$imputed.steps)
+imputed.display.mean = sprintf("%.1f", imputed.steps.per.day.mean)
+imputed.display.median = sprintf("%.1f", imputed.steps.per.day.median)
+```
+
+The mean and median steps per day, respectively, are
+
+```{r}
+imputed.display.mean
+```
+
+```{r}
+imputed.display.median
+```
+
+The main effect of this imputation method is that there are now a greater number
+of "average" days.  This forces the overall mean to become closer to the median.
+Note that the histogram has an identical shape except for the middle-most 
+grouping, which has a larger number of days included.
+
+One other odd effect is that the median is no longer a factor of one-half, as
+might be expected for the median of integers (steps).  
+
+These facts are easily explained by recognizing that all of the missing data 
+occurs in blocks that include an entire day.  In other words, we are literally 
+replacing the missing days with an "average" day, which, incidentally, does not
+have an integer number of steps (similar to the "each family has 1.8 children" 
+conundrum).
+
 # 5 - Weekdays vs. Weekends
+
+```{r Making_weekends}
+data$daytype = factor(sapply(data$datetime,convert_to_weekday_weekend))
+
+ag = aggregate(steps~time+daytype,data,mean)
+
+#Calculating overall max so that the two plots are on the same scale.
+max_steps = max(ag$steps)
+
+#Plotting
+par(mfrow = c(2,1))
+# I used a specialized plotting function to ensure identical treatment
+# of the two states ("weekend" and "weekday").
+# Also, this makes it clear which plot is which.
+# See Utility Functions for the function definition.
+plot_steps_vs_time(data = ag, day_type = "weekday", max_steps = max_steps)
+plot_steps_vs_time(data = ag, day_type = "weekend", max_steps = max_steps)
+```
+
